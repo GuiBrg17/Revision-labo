@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programme de révision — Lola</title>
+<style>
+  :root{
+    --accent:#258AB3;
+    --accent-dark:#1c6a8a;
+    --bg:#f4f7f9;
+    --card:#ffffff;
+    --text:#1f2a30;
+    --muted:#5a6b73;
+    --border:#dfe7eb;
+    --done:#e7f5ec;
+    --done-border:#8fc9a3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:Georgia, 'Times New Roman', serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+    color:#fff;
+    padding:28px 20px 22px;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:20;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  header h1{margin:0 0 4px;font-size:1.5rem;letter-spacing:.3px;}
+  header p{margin:0;font-size:.9rem;opacity:.9;}
+
+  .progress-wrap{
+    max-width:900px;
+    margin:14px auto 0;
+    padding:0 10px;
+  }
+  .progress-bar{
+    background:rgba(255,255,255,.3);
+    border-radius:20px;
+    height:14px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    background:#fff;
+    height:100%;
+    width:0%;
+    transition:width .3s ease;
+  }
+  .progress-label{
+    font-size:.8rem;
+    margin-top:6px;
+    opacity:.95;
+  }
+
+  .controls{
+    max-width:900px;
+    margin:18px auto 0;
+    padding:0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+  }
+  .controls select, .controls input[type="text"]{
+    font-family:Georgia, serif;
+    padding:8px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:#fff;
+    color:var(--text);
+    font-size:.9rem;
+  }
+  .controls button{
+    font-family:Georgia, serif;
+    padding:8px 14px;
+    border:1px solid var(--accent);
+    border-radius:8px;
+    background:#fff;
+    color:var(--accent);
+    cursor:pointer;
+    font-size:.9rem;
+  }
+  .controls button:hover{background:var(--accent);color:#fff;}
+
+  main{
+    max-width:900px;
+    margin:20px auto 60px;
+    padding:0 16px;
+  }
+
+  .phase-title{
+    color:var(--accent-dark);
+    font-size:1.05rem;
+    margin:32px 0 12px;
+    padding-bottom:6px;
+    border-bottom:2px solid var(--accent);
+  }
+  .phase-title:first-child{margin-top:0;}
+
+  .week{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    margin-bottom:14px;
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .week-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 18px;
+    cursor:pointer;
+    background:#fbfdfe;
+    user-select:none;
+  }
+  .week-header:hover{background:#f0f7fa;}
+  .week-title{
+    font-weight:bold;
+    color:var(--accent-dark);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .week-badge{
+    background:var(--accent);
+    color:#fff;
+    font-size:.75rem;
+    padding:3px 9px;
+    border-radius:12px;
+    font-family:Georgia, serif;
+  }
+  .week-progress-mini{
+    font-size:.8rem;
+    color:var(--muted);
+  }
+  .chevron{
+    transition:transform .2s ease;
+    color:var(--accent);
+    font-size:1rem;
+  }
+  .week.open .chevron{transform:rotate(90deg);}
+
+  .week-body{
+    display:none;
+    padding:4px 18px 16px;
+  }
+  .week.open .week-body{display:block;}
+
+  .day-row{
+    border-top:1px solid var(--border);
+    padding:12px 0;
+    display:grid;
+    grid-template-columns:26px 1fr;
+    gap:10px;
+    align-items:start;
+  }
+  .day-row:hover{background:#fafcfd;}
+  .day-row.done{background:var(--done);}
+  .day-row.done .day-name, .day-row.done .subj{color:var(--accent-dark);}
+
+  .check{
+    margin-top:3px;
+    width:19px;
+    height:19px;
+    accent-color:var(--accent);
+    cursor:pointer;
+  }
+  .day-name{
+    font-weight:bold;
+    color:var(--text);
+    font-size:.85rem;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+  }
+  .subj{
+    color:var(--accent);
+    font-weight:bold;
+    margin-left:6px;
+  }
+  .day-meta{
+    font-size:.85rem;
+    color:var(--muted);
+    margin-top:3px;
+    line-height:1.5;
+  }
+  .day-meta .chap{font-style:italic;color:var(--text);}
+  .day-meta .pages{white-space:nowrap;}
+  .day-meta .detail{display:block;margin-top:4px;color:var(--text);}
+  .day-meta .time{
+    display:inline-block;
+    margin-top:6px;
+    background:#eef6f9;
+    color:var(--accent-dark);
+    padding:2px 9px;
+    border-radius:10px;
+    font-size:.78rem;
+  }
+  .bilan .subj{color:#b3762c;}
+  .bilan{border-left:3px solid #e3b673;}
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:.8rem;
+    padding:20px;
+  }
+
+  .hidden{display:none !important;}
+
+  @media (max-width:600px){
+    header h1{font-size:1.2rem;}
+    .week-title{font-size:.95rem;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Programme de révision — Lola</h1>
+  <p>25 semaines · Maths, Physique &amp; Chimie</p>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 / 0 séances terminées</div>
+    <div class="progress-label" id="syncStatus" style="margin-top:4px;">Initialisation...</div>
+  </div>
+</header>
+
+<div class="controls">
+  <select id="filterMatiere">
+    <option value="all">Toutes les matières</option>
+    <option value="Maths">Maths</option>
+    <option value="Physique">Physique</option>
+    <option value="Chimie">Chimie</option>
+    <option value="Bilan">Bilan / Examen</option>
+  </select>
+  <button id="expandAll">Tout ouvrir</button>
+  <button id="collapseAll">Tout fermer</button>
+  <button id="resetProgress">Réinitialiser la progression</button>
+  <button id="copySyncLink">Copier le lien de synchro</button>
+</div>
+
+<main id="main"></main>
+
+<footer>Coche les séances au fur et à mesure — ta progression est sauvegardée automatiquement sur cet appareil.</footer>
+
+<script>
+const DATA = [
+{phase:"Semaines 1 à 5 : Bases (Numération, Mesures et Molécules)", weeks:[
+ {num:"S1", days:[
+   {jour:"Lundi", matiere:"Maths / Physique", chapitre:"Épisode 1 (unités) / Chapitre 1 (mesure)", livre:"Cahier / Phys. Nuls", pages:"p. 9 / p. 19-20", detail:"T'entraîner aux conversions et lire l'intro sur les mesures.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Maths", chapitre:"Chapitre 1 (entiers) / Épisode 2 (relatifs)", livre:"Maths Nuls / Cahier", pages:"p. 7-16 / p. 18", detail:"Étudier la numération et calculer avec les relatifs.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Maths / Chimie", chapitre:"Épisode 1 (diviseurs) / Chapitre 4 (isotopes)", livre:"Cahier / STL", pages:"p. 8 / p. 32-39", detail:"Pratiquer les divisions. Comprendre ce qu'est un isotope.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Auto-évaluation", livre:"-", pages:"N/A", detail:"Reprendre à blanc les erreurs de la semaine.", temps:"1h00"}
+ ]},
+ {num:"S2", days:[
+   {jour:"Lundi", matiere:"Maths / Physique", chapitre:"Chapitre 6 (négatifs) / Épisode 6 (masse/poids)", livre:"Maths Nuls / Cahier", pages:"p. 81-92 / p. 63", detail:"Approfondir l'addition/soustraction des relatifs et masse/poids.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Maths / Chimie", chapitre:"Épisode 3 (puissances) / Chapitre 5 (solutions)", livre:"Cahier / STL", pages:"p. 28 / p. 40-48", detail:"S'entraîner sur les puissances. Étudier la concentration.", temps:"2h00"},
+   {jour:"Vendredi", matiere:"Chimie", chapitre:"Chapitre 1 > Géométrie des molécules", livre:"STL", pages:"p. 11-16", detail:"Assimiler la structure spatiale et faire l'exercice résolu.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Auto-évaluation", livre:"-", pages:"N/A", detail:"Faire le point sur les puissances et la géométrie.", temps:"1h00"}
+ ]},
+ {num:"S3", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 2 > Électronégativité et polarité", livre:"STL", pages:"p. 17-22", detail:"Comprendre la polarité des molécules. Test de connaissances.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Chapitre 1 > Représentation spatiale", livre:"STL", pages:"p. 137-144", detail:"Approfondissement Terminale sur les espèces chimiques.", temps:"2h00"},
+   {jour:"Vendredi", matiere:"Chimie", chapitre:"Chapitre 3 > Formules et représentation", livre:"STL", pages:"p. 23-31", detail:"Maîtriser l'écriture des formules brutes et développées.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Auto-évaluation", livre:"-", pages:"N/A", detail:"Valider les représentations moléculaires.", temps:"1h00"}
+ ]},
+ {num:"S4", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 5 > Solutions aqueuses", livre:"STL", pages:"p. 40-48", detail:"Révision des bases pour les futurs mélanges.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Chapitre 6 > Solutions acides et basiques", livre:"STL", pages:"p. 49-56", detail:"Comprendre le pH et faire l'exercice résolu.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Chimie", chapitre:"Chapitre 7 > Réactions acides et basiques", livre:"STL", pages:"p. 57-66", detail:"Écrire et équilibrer les équations acido-basiques.", temps:"2h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Entraînement acido-basique", livre:"-", pages:"N/A", detail:"Refaire les exercices d'équilibrage.", temps:"1h30"}
+ ]},
+ {num:"S5", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 14 > Réactions acido-basiques", livre:"STI2D", pages:"p. 168-170", detail:"Croiser les connaissances (autre approche).", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Chapitre 2 > Réactions en solution aqueuse", livre:"STL", pages:"p. 145-155", detail:"L'aboutissement niveau Terminale pour les titrages.", temps:"2h00"},
+   {jour:"Vendredi", matiere:"Maths", chapitre:"Chapitre 9 > La proportionnalité", livre:"Maths Nuls", pages:"p. 135-143", detail:"Calculer des pourcentages et concentrations avec aisance.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Évaluation pH et proportions", livre:"-", pages:"N/A", detail:"Relier les mathématiques aux calculs de concentration.", temps:"1h30"}
+ ]}
+]},
+{phase:"Semaines 6 à 10 : Oxydoréduction, Cinétique et Ondes", weeks:[
+ {num:"S6", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 12 > Oxydoréduction et piles", livre:"STI2D", pages:"p. 45-47", detail:"Identifier les phénomènes d'oxydation courants.", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Chapitre 3 > Réactions d'oxydoréduction", livre:"STL", pages:"p. 156-163", detail:"Identifier oxydants/réducteurs, équilibrer demi-équations.", temps:"2h00"},
+   {jour:"Vendredi", matiere:"Chimie", chapitre:"Chapitre 4 > Pile électrochimique", livre:"STL", pages:"p. 164-171", detail:"Comprendre le fonctionnement complet d'une pile.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Entraînement Oxydoréduction", livre:"-", pages:"N/A", detail:"QCM et équilibrage de couples redox.", temps:"1h30"}
+ ]},
+ {num:"S7", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 2 > L'énergie chimique", livre:"STI2D", pages:"p. 15-16", detail:"Bilans énergétiques de réactions simples.", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Maths", chapitre:"Chapitre 7 > Les équations du 1er degré", livre:"Maths Nuls", pages:"p. 95-99", detail:"Mathématiques utiles pour équilibrer la stœchiométrie.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Chimie", chapitre:"Chapitre 8 > Cinétique d'une réaction", livre:"STL", pages:"p. 67-74", detail:"Vitesse de réaction et facteurs cinétiques.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Auto-évaluation", livre:"-", pages:"N/A", detail:"Vérifier la maîtrise des équations et de l'énergie.", temps:"1h00"}
+ ]},
+ {num:"S8", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 5 > Cinétique d'une réaction", livre:"STL", pages:"p. 172-179", detail:"Approfondissement Terminale et exercices résolus.", temps:"2h00"},
+   {jour:"Mercredi", matiere:"Maths", chapitre:"Chapitre 15 > Croissance exponentielle", livre:"Maths Nuls", pages:"p. 225-232", detail:"Le modèle mathématique de l'évolution des réactions.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Maths", chapitre:"Chapitre 15 > Logarithmes naturels", livre:"Maths Nuls", pages:"p. 233-235", detail:"Indispensable pour comprendre l'échelle de pH.", temps:"1h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Analyse cinétique", livre:"-", pages:"N/A", detail:"Analyser des graphiques de vitesse de réaction.", temps:"1h00"}
+ ]},
+ {num:"S9", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 13 > Énergie chimique", livre:"STL", pages:"p. 246-254", detail:"Bilan approfondi sur l'aspect énergétique.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 13 > Intro à la notion d'onde", livre:"STI2D", pages:"p. 48-50", detail:"Définitions de base (période, fréquence, longueur).", temps:"1h00"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 13 > Les ondes mécaniques", livre:"STL", pages:"p. 108-112", detail:"Propagation et caractéristiques fondamentales.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Auto-évaluation", livre:"-", pages:"N/A", detail:"Vérifier la compréhension des notions d'ondes.", temps:"1h00"}
+ ]},
+ {num:"S10", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 15 > Ondes électromagnétiques", livre:"STI2D", pages:"p. 54-56", detail:"Le spectre complet (UV, Visible, Infrarouge).", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 15 > Ondes électromagnétiques", livre:"STL", pages:"p. 120-127", detail:"Niveau supérieur et applications, exercices résolus.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Maths", chapitre:"Chapitre 3 > Fonctions trigonométriques", livre:"STI2D", pages:"p. 101-103", detail:"Étude mathématique des signaux périodiques.", temps:"1h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"QCM Spectre et Trigo", livre:"-", pages:"N/A", detail:"Revoir les longueurs d'ondes et calculs liés.", temps:"1h00"}
+ ]}
+]},
+{phase:"Semaines 11 à 15 : Optique, Électricité et Statistiques", weeks:[
+ {num:"S11", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 9 > Énergie transportée (lumière)", livre:"STI2D", pages:"p. 35-37", detail:"L'aspect énergétique des photons.", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 8 > L'optique (réfraction)", livre:"Phys Nuls", pages:"p. 231-240", detail:"Bases de l'optique géométrique et lentilles.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 19 > La lumière polychromatique", livre:"Phys Nuls", pages:"p. 523-532", detail:"Séparation et absorption de la lumière.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Synthèse Optique", livre:"-", pages:"N/A", detail:"Fiches sur les formules liées aux photons.", temps:"1h00"}
+ ]},
+ {num:"S12", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Chapitre 16 > Modèle corpusculaire", livre:"STL", pages:"p. 128-133", detail:"Comprendre les états à l'échelle microscopique.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 8 > La diffraction", livre:"Phys Nuls", pages:"p. 244-245", detail:"Le comportement ondulatoire spécifique.", temps:"1h00"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 3 > Tension et intensité", livre:"STI2D", pages:"p. 17-19", detail:"Les grandeurs de base en régime continu.", temps:"1h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Auto-évaluation", livre:"-", pages:"N/A", detail:"Diffraction et bases de l'électricité.", temps:"1h00"}
+ ]},
+ {num:"S13", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 4 > Puissance et énergie", livre:"STI2D", pages:"p. 20-22", detail:"Calculs de bilans énergétiques.", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 14 > Lois des circuits, effet Joule", livre:"STL", pages:"p. 255-263", detail:"Sécurité des installations et dissipation thermique.", temps:"2h00"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 6 > Des charges et décharges", livre:"Phys Nuls", pages:"p. 169-179", detail:"Électrostatique, conducteurs et isolants.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Calculs de puissance", livre:"-", pages:"N/A", detail:"Refaire des exercices d'électricité.", temps:"1h00"}
+ ]},
+ {num:"S14", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 7 > Dans le sens du courant", livre:"Phys Nuls", pages:"p. 201-215", detail:"La résistance, lois de Joule et d'Ohm.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Maths", chapitre:"Chapitre 12 > Les résumés statistiques", livre:"Maths Nuls", pages:"p. 183-187", detail:"Médianes, quartiles, moyennes.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Maths", chapitre:"Chapitre 12 > Écarts et variance", livre:"Maths Nuls", pages:"p. 194-196", detail:"Mesurer l'incertitude et la dispersion.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Statistiques de base", livre:"-", pages:"N/A", detail:"Traiter une série de mesures.", temps:"1h00"}
+ ]},
+ {num:"S15", days:[
+   {jour:"Lundi", matiere:"Maths", chapitre:"Chapitre 12 > Les erreurs et graphiques", livre:"Maths Nuls", pages:"p. 191-194", detail:"Construire des histogrammes corrects.", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Maths", chapitre:"Chapitre 13 > Le hasard domestiqué", livre:"Maths Nuls", pages:"p. 197-200", detail:"Notions de base en probabilités.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Maths", chapitre:"Chapitre 8 > Inégalités et tolérances", livre:"Maths Nuls", pages:"p. 109-114", detail:"Gérer les marges d'erreur et de confiance.", temps:"1h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Traitement de données", livre:"-", pages:"N/A", detail:"Variance et tolérances sur de fausses données.", temps:"1h30"}
+ ]}
+]},
+{phase:"Semaines 16 à 20 : Thermodynamique, Fluides et Isotopes", weeks:[
+ {num:"S16", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 5 > Énergie interne", livre:"STI2D", pages:"p. 23-25", detail:"Température et échange d'énergie.", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 6 > Bilan énergétique", livre:"STI2D", pages:"p. 26-28", detail:"Application des échanges de chaleur.", temps:"1h00"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 10 > Changements d'état", livre:"STI2D", pages:"p. 156-158", detail:"Chaleurs latentes et transferts.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Thermodynamique 1", livre:"-", pages:"N/A", detail:"Calculs de chaleur massique.", temps:"1h00"}
+ ]},
+ {num:"S17", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 5 > De Carnot à Planck", livre:"Phys Nuls", pages:"p. 128-135", detail:"Bases thermo (pression, vide).", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 5 > Entropie et chaleur", livre:"Phys Nuls", pages:"p. 144-156", detail:"Premier principe et conservation.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 8 > Statique des fluides", livre:"STI2D", pages:"p. 149-151", detail:"Pression, poussée (liquides).", temps:"1h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Thermodynamique 2", livre:"-", pages:"N/A", detail:"Entropie et bilans d'état.", temps:"1h30"}
+ ]},
+ {num:"S18", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 4 > Les milieux continus", livre:"Phys Nuls", pages:"p. 109-117", detail:"Viscosité (utile en chromato).", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 10 > Propriétés des matériaux", livre:"STI2D", pages:"p. 38-41", detail:"Organisation de la matière solide.", temps:"1h00"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 9 > Mouvements", livre:"STL", pages:"p. 75-82", detail:"Bases de la cinématique.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Exercices Fluides/Matériaux", livre:"-", pages:"N/A", detail:"Refaire la statique des fluides.", temps:"1h00"}
+ ]},
+ {num:"S19", days:[
+   {jour:"Lundi", matiere:"Maths", chapitre:"Chapitre 10 > Coordonnées et repères", livre:"Maths Nuls", pages:"p. 159-163", detail:"Repérage pour le traitement de données.", temps:"1h00"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Chapitre 4 > Isotopes et grandeurs", livre:"STL", pages:"p. 32-39", detail:"Masse molaire isotopique.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Chapitre 6 > La radioactivité", livre:"STL", pages:"p. 180-188", detail:"Modèle nucléaire, types de rayonnements.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"QCM Isotopes et atomes", livre:"-", pages:"N/A", detail:"Valider les structures atomiques.", temps:"1h00"}
+ ]},
+ {num:"S20", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Chapitre 7 > Loi décroissance radioactive", livre:"STL", pages:"p. 189-195", detail:"Évolution d'une population de noyaux.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Physique", chapitre:"Chapitre 10 > La nature atomisée", livre:"Phys Nuls", pages:"p. 287-293", detail:"Découverte rayons X et radioactivité.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Maths", chapitre:"Chapitre 1 > Fonctions exp. (base e)", livre:"STI2D", pages:"p. 218-220", detail:"Outil pour les lois de décroissance.", temps:"1h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Entraînement décroissance", livre:"-", pages:"N/A", detail:"Exercices de calcul de temps de demi-vie.", temps:"1h30"}
+ ]}
+]},
+{phase:"Semaines 21 à 25 : Révisions Intensives, Spécialités et Examen", weeks:[
+ {num:"S21", days:[
+   {jour:"Lundi", matiere:"Chimie", chapitre:"Solutions aqueuses & pH (Review)", livre:"STL", pages:"p. 40-56", detail:"Refaire les exos non maîtrisés (acides/bases).", temps:"2h00"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Oxydoréduction & Piles (Review)", livre:"STL", pages:"p. 156-171", detail:"Refaire les équilibrages complexes.", temps:"2h00"},
+   {jour:"Vendredi", matiere:"Chimie", chapitre:"Cinétique (Review)", livre:"STL", pages:"p. 67-74 / 172-179", detail:"Revoir les vitesses de réaction.", temps:"2h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Bilan Chimie Analytique", livre:"-", pages:"N/A", detail:"Auto-évaluation globale sur la chimie orga.", temps:"1h30"}
+ ]},
+ {num:"S22", days:[
+   {jour:"Lundi", matiere:"Maths", chapitre:"Proportions & Concentrations (Review)", livre:"Maths Nuls", pages:"p. 135-143", detail:"Maîtriser parfaitement C = n/V.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Bilans de matière (Review)", livre:"STI2D/STL", pages:"N/A", detail:"Simulation de protocoles de titrages.", temps:"2h00"},
+   {jour:"Vendredi", matiere:"Physique", chapitre:"Ondes électromagnétiques (Review)", livre:"STL", pages:"p. 120-127", detail:"Refaire les calculs de longueurs d'onde.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Concentration et Spectro", livre:"-", pages:"N/A", detail:"Exercices croisés maths/physique.", temps:"1h30"}
+ ]},
+ {num:"S23", days:[
+   {jour:"Lundi", matiere:"Physique", chapitre:"Optique et Spectres (Review)", livre:"Phys Nuls", pages:"p. 231-240 / 523-532", detail:"Relire les bases de l'absorption lumineuse.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Chimie", chapitre:"Modèle corpusculaire (Review)", livre:"STL", pages:"p. 128-133 / 137-144", detail:"Représentations 3D.", temps:"1h30"},
+   {jour:"Vendredi", matiere:"Maths", chapitre:"Statistiques et variance (Review)", livre:"Maths Nuls", pages:"p. 183-196", detail:"Calculs d'écart-type sur des valeurs.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Statistiques appliquées", livre:"-", pages:"N/A", detail:"Interpréter la justesse de mesures.", temps:"1h30"}
+ ]},
+ {num:"S24", days:[
+   {jour:"Lundi", matiere:"Maths", chapitre:"Aires et intégrales", livre:"Maths Nuls", pages:"p. 237-240", detail:"Intégrer les pics de chromatographie.", temps:"1h30"},
+   {jour:"Mercredi", matiere:"Examen", chapitre:"Sujet d'examen corrigé", livre:"STI2D", pages:"p. 10", detail:"Traiter le sujet en conditions réelles.", temps:"3h30"},
+   {jour:"Vendredi", matiere:"Examen", chapitre:"Correction et analyse", livre:"STI2D", pages:"N/A", detail:"Identifier les erreurs de l'examen blanc.", temps:"2h00"},
+   {jour:"Samedi", matiere:"Bilan", chapitre:"Méthodologie", livre:"-", pages:"N/A", detail:"Repos ou analyse des fautes de l'examen.", temps:"1h00"}
+ ]},
+ {num:"S25", days:[
+   {jour:"Lundi", matiere:"QCM", chapitre:"Testez vos connaissances", livre:"STL", pages:"Fins de chap.", detail:"Balayer l'ensemble des petits QCM.", temps:"2h00"},
+   {jour:"Mercredi", matiere:"Bilan", chapitre:"Méthodo d'analyse (Titrages/Spectro)", livre:"Tous", pages:"N/A", detail:"Rédiger des fiches synthétiques.", temps:"2h30"},
+   {jour:"Vendredi", matiere:"Bilan", chapitre:"Synthèse organique et sécurité", livre:"Tous", pages:"N/A", detail:"Résumer les précautions en laboratoire.", temps:"1h30"},
+   {jour:"Samedi", matiere:"Célébration", chapitre:"Repos absolu", livre:"-", pages:"N/A", detail:"Fin du programme, tu es prête !", temps:"0h00"}
+ ]}
+]}
+];
+
+const STORAGE_KEY = "lola-revision-progress-v1";
+const SYNC_ID_KEY = "lola-revision-sync-id";
+const BLOB_API = "https://jsonblob.com/api/jsonBlob";
+
+function loadLocalProgress(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveLocalProgress(p){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }catch(e){}
+}
+let progress = loadLocalProgress();
+
+// --- Synchro multi-appareils (jsonblob.com, sans compte) ---
+let syncId = null;
+let syncStatusEl = null;
+let syncTimer = null;
+
+function getSyncIdFromUrl(){
+  const hash = window.location.hash;
+  const match = hash.match(/sync=([a-zA-Z0-9-]+)/);
+  return match ? match[1] : null;
+}
+
+function setSyncIdInUrl(id){
+  history.replaceState(null, "", window.location.pathname + window.location.search + "#sync=" + id);
+}
+
+function setSyncStatus(text){
+  if(syncStatusEl) syncStatusEl.textContent = text;
+}
+
+async function initSync(){
+  syncId = getSyncIdFromUrl() || localStorage.getItem(SYNC_ID_KEY);
+
+  if(!syncId){
+    // Première ouverture : on crée un espace de synchro
+    setSyncStatus("Création de la synchro...");
+    try{
+      const res = await fetch(BLOB_API, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(progress)
+      });
+      const location = res.headers.get("Location") || res.url;
+      syncId = location.split("/").pop();
+      localStorage.setItem(SYNC_ID_KEY, syncId);
+      setSyncIdInUrl(syncId);
+      setSyncStatus("Synchro activée — utilise ce lien sur tous les appareils.");
+    }catch(e){
+      setSyncStatus("Hors ligne — sauvegarde locale uniquement.");
+      return;
+    }
+  } else {
+    localStorage.setItem(SYNC_ID_KEY, syncId);
+    setSyncIdInUrl(syncId);
+    // Récupérer la progression distante et fusionner (le distant fait foi)
+    try{
+      setSyncStatus("Synchronisation...");
+      const res = await fetch(BLOB_API + "/" + syncId);
+      if(res.ok){
+        const remote = await res.json();
+        progress = Object.assign({}, progress, remote);
+        saveLocalProgress(progress);
+        render();
+      }
+      setSyncStatus("Synchronisé sur cet appareil.");
+    }catch(e){
+      setSyncStatus("Hors ligne — sauvegarde locale uniquement.");
+    }
+  }
+}
+
+function pushSync(){
+  if(!syncId) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async ()=>{
+    try{
+      setSyncStatus("Synchronisation...");
+      await fetch(BLOB_API + "/" + syncId, {
+        method: "PUT",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(progress)
+      });
+      setSyncStatus("Synchronisé sur cet appareil.");
+    }catch(e){
+      setSyncStatus("Hors ligne — changement gardé en local, réessaiera plus tard.");
+    }
+  }, 600);
+}
+
+function saveProgress(p){
+  saveLocalProgress(p);
+  pushSync();
+}
+
+function matiereCategory(m){
+  if(m.includes("Maths")) return "Maths";
+  if(m.includes("Physique")) return "Physique";
+  if(m.includes("Chimie")) return "Chimie";
+  return "Bilan";
+}
+
+function dayId(weekNum, jour, idx){ return weekNum+"-"+idx+"-"+jour; }
+
+function render(){
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  let totalDays = 0, doneDays = 0;
+
+  DATA.forEach(phase=>{
+    const phaseTitle = document.createElement("div");
+    phaseTitle.className = "phase-title";
+    phaseTitle.textContent = phase.phase;
+    main.appendChild(phaseTitle);
+
+    phase.weeks.forEach(week=>{
+      const weekDiv = document.createElement("div");
+      weekDiv.className = "week";
+      weekDiv.dataset.week = week.num;
+
+      const header = document.createElement("div");
+      header.className = "week-header";
+
+      const doneCount = week.days.filter((d,i)=>progress[dayId(week.num,d.jour,i)]).length;
+      totalDays += week.days.length;
+      doneDays += doneCount;
+
+      header.innerHTML = `
+        <div class="week-title"><span class="chevron">&#9656;</span> Semaine <span class="week-badge">${week.num}</span></div>
+        <div class="week-progress-mini">${doneCount}/${week.days.length} faites</div>
+      `;
+      header.addEventListener("click", ()=>{
+        weekDiv.classList.toggle("open");
+      });
+
+      const body = document.createElement("div");
+      body.className = "week-body";
+
+      week.days.forEach((d, idx)=>{
+        const id = dayId(week.num, d.jour, idx);
+        const cat = matiereCategory(d.matiere);
+        const row = document.createElement("div");
+        row.className = "day-row" + (cat==="Bilan" ? " bilan" : "") + (progress[id] ? " done" : "");
+        row.dataset.cat = cat;
+
+        row.innerHTML = `
+          <input type="checkbox" class="check" ${progress[id] ? "checked" : ""}>
+          <div>
+            <span class="day-name">${d.jour}</span><span class="subj">${d.matiere}</span>
+            <div class="day-meta">
+              <span class="chap">${d.chapitre}</span> —
+              <span class="pages">${d.livre}${d.pages && d.pages!=="N/A" ? ", "+d.pages : ""}</span>
+              <span class="detail">${d.detail}</span>
+              <span class="time">${d.temps}</span>
+            </div>
+          </div>
+        `;
+        const checkbox = row.querySelector(".check");
+        checkbox.addEventListener("change", ()=>{
+          progress[id] = checkbox.checked;
+          saveProgress(progress);
+          row.classList.toggle("done", checkbox.checked);
+          updateWeekMini(weekDiv, week);
+          updateGlobalProgress();
+        });
+        body.appendChild(row);
+      });
+
+      weekDiv.appendChild(header);
+      weekDiv.appendChild(body);
+      main.appendChild(weekDiv);
+    });
+  });
+
+  updateProgressBar(doneDays, totalDays);
+  applyFilter();
+}
+
+function updateProgressBar(done, total){
+  const pct = total ? Math.round((done/total)*100) : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressLabel").textContent = `${done} / ${total} séances terminées (${pct}%)`;
+}
+
+function updateWeekMini(weekDiv, week){
+  const doneCount = week.days.filter((d,i)=>progress[dayId(week.num,d.jour,i)]).length;
+  weekDiv.querySelector(".week-progress-mini").textContent = `${doneCount}/${week.days.length} faites`;
+}
+
+function updateGlobalProgress(){
+  let total = 0, done = 0;
+  DATA.forEach(phase=>phase.weeks.forEach(week=>{
+    total += week.days.length;
+    done += week.days.filter((d,i)=>progress[dayId(week.num,d.jour,i)]).length;
+  }));
+  updateProgressBar(done, total);
+}
+
+function applyFilter(){
+  const val = document.getElementById("filterMatiere").value;
+  document.querySelectorAll(".day-row").forEach(row=>{
+    if(val === "all" || row.dataset.cat === val){
+      row.classList.remove("hidden");
+    } else {
+      row.classList.add("hidden");
+    }
+  });
+}
+
+document.getElementById("filterMatiere").addEventListener("change", applyFilter);
+document.getElementById("expandAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".week").forEach(w=>w.classList.add("open"));
+});
+document.getElementById("collapseAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".week").forEach(w=>w.classList.remove("open"));
+});
+document.getElementById("resetProgress").addEventListener("click", ()=>{
+  if(confirm("Réinitialiser toute la progression ?")){
+    progress = {};
+    saveProgress(progress);
+    render();
+  }
+});
+
+syncStatusEl = document.getElementById("syncStatus");
+
+document.getElementById("copySyncLink").addEventListener("click", ()=>{
+  navigator.clipboard.writeText(window.location.href).then(()=>{
+    alert("Lien copié ! Ouvre ce même lien sur ton autre appareil pour retrouver ta progression.");
+  }).catch(()=>{
+    prompt("Copie ce lien et ouvre-le sur ton autre appareil :", window.location.href);
+  });
+});
+
+render();
+// Ouvre la première semaine par défaut
+const firstWeek = document.querySelector(".week");
+if(firstWeek) firstWeek.classList.add("open");
+
+initSync();
+</script>
+</body>
+</html>
