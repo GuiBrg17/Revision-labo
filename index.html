@@ -89,6 +89,15 @@
     font-size:.9rem;
   }
   .controls button:hover{background:var(--accent);color:#fff;}
+  #syncLinkInput{
+    font-family:Georgia, serif;
+    padding:8px 12px;
+    border:1px solid var(--accent);
+    border-radius:8px;
+    background:#fff;
+    color:var(--text);
+    font-size:.85rem;
+  }
 
   main{
     max-width:900px;
@@ -246,6 +255,9 @@
   <button id="collapseAll">Tout fermer</button>
   <button id="resetProgress">Réinitialiser la progression</button>
   <button id="copySyncLink">Copier le lien de synchro</button>
+</div>
+<div class="controls" id="syncLinkWrap" style="display:none;">
+  <input type="text" id="syncLinkInput" readonly style="flex:1;min-width:220px;">
 </div>
 
 <main id="main"></main>
@@ -644,10 +656,25 @@ document.getElementById("resetProgress").addEventListener("click", ()=>{
 syncStatusEl = document.getElementById("syncStatus");
 
 document.getElementById("copySyncLink").addEventListener("click", ()=>{
-  navigator.clipboard.writeText(window.location.href).then(()=>{
-    alert("Lien copié ! Ouvre ce même lien sur ton autre appareil pour retrouver ta progression.");
+  const link = window.location.href;
+  const wrap = document.getElementById("syncLinkWrap");
+  const input = document.getElementById("syncLinkInput");
+  wrap.style.display = "flex";
+  input.value = link;
+  input.focus();
+  input.select();
+  input.setSelectionRange(0, 99999);
+  try{
+    const ok = document.execCommand("copy");
+    if(ok){
+      setSyncStatus("Lien copié — colle-le sur ton autre appareil.");
+      return;
+    }
+  }catch(e){}
+  navigator.clipboard && navigator.clipboard.writeText(link).then(()=>{
+    setSyncStatus("Lien copié — colle-le sur ton autre appareil.");
   }).catch(()=>{
-    prompt("Copie ce lien et ouvre-le sur ton autre appareil :", window.location.href);
+    setSyncStatus("Copie automatique impossible — sélectionne le lien affiché ci-dessus et copie-le manuellement.");
   });
 });
 
