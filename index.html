@@ -430,7 +430,7 @@ const DATA = [
 
 const STORAGE_KEY = "lola-revision-progress-v1";
 const SYNC_ID_KEY = "lola-revision-sync-id";
-const BLOB_API = "https://jsonblob.com/api/jsonBlob";
+const WORKER_API = "https://revision-labo.guillaume-branger17.workers.dev";
 
 function loadLocalProgress(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -441,7 +441,7 @@ function saveLocalProgress(p){
 }
 let progress = loadLocalProgress();
 
-// --- Synchro multi-appareils (jsonblob.com, sans compte) ---
+// --- Synchro multi-appareils (Cloudflare Worker + KV) ---
 let syncId = null;
 let syncStatusEl = null;
 let syncTimer = null;
@@ -467,13 +467,9 @@ async function initSync(){
     // Première ouverture : on crée un espace de synchro
     setSyncStatus("Création de la synchro...");
     try{
-      const res = await fetch(BLOB_API, {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(progress)
-      });
-      const location = res.headers.get("Location") || res.url;
-      syncId = location.split("/").pop();
+      const res = await fetch(WORKER_API + "/new", { method: "POST" });
+      const data = await res.json();
+      syncId = data.id;
       localStorage.setItem(SYNC_ID_KEY, syncId);
       setSyncIdInUrl(syncId);
       setSyncStatus("Synchro activée — utilise ce lien sur tous les appareils.");
@@ -487,7 +483,7 @@ async function initSync(){
     // Récupérer la progression distante et fusionner (le distant fait foi)
     try{
       setSyncStatus("Synchronisation...");
-      const res = await fetch(BLOB_API + "/" + syncId);
+      const res = await fetch(WORKER_API + "/" + syncId);
       if(res.ok){
         const remote = await res.json();
         progress = Object.assign({}, progress, remote);
@@ -507,7 +503,7 @@ function pushSync(){
   syncTimer = setTimeout(async ()=>{
     try{
       setSyncStatus("Synchronisation...");
-      await fetch(BLOB_API + "/" + syncId, {
+      await fetch(WORKER_API + "/" + syncId, {
         method: "PUT",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify(progress)
